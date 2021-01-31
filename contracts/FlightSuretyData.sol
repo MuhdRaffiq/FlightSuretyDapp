@@ -11,6 +11,7 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    mapping( => address) private registeredAirlines;                    //mapping to find if the airlines are in the list of registered airlines
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -29,6 +30,12 @@ contract FlightSuretyData {
         contractOwner = msg.sender;
     }
 
+
+    struct Airlines {
+        bool isRegistered;
+        uint8 statusCode;
+        uint256 updatedTimestamp;       
+    }
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -184,3 +191,13 @@ contract FlightSuretyData {
 
 }
 
+/********************************************************************************************/
+/*                                     MY SMART CONTRACT FUNCTIONS                             */
+/********************************************************************************************/
+
+
+modifier requireRegisteredAirlines()
+    {
+        require(msg.sender == contractOwner, "Caller is not contract owner");
+        _;
+    }

@@ -32,6 +32,7 @@ contract FlightSuretyApp {
         uint256 updatedTimestamp;        
         address airline;
     }
+
     mapping(bytes32 => Flight) private flights;
 
  
@@ -107,6 +108,8 @@ contract FlightSuretyApp {
                             pure
                             returns(bool success, uint256 votes)
     {
+
+        if()
         return (success, 0);
     }
 

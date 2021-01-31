@@ -39,7 +39,7 @@
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Airlines Address</label> <input type="text" id="airlines-address"> <btn class="btn btn-primary" id="submit-airlines">Submit Details</btn>
+            <label class="form">Airlines Wallet Address</label> <input type="text" id="airlines-address"> <btn class="btn btn-primary" id="submit-airlines">Submit Address</btn>
         </div>
         
         <div class="top-20"></div>
@@ -47,7 +47,7 @@
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Customer Address</label> <input type="text" id="customer-address"> <btn class="btn btn-primary" id="submit-customer">Submit detailas</btn>
+            <label class="form">Customer Walllet Address</label> <input type="text" id="customerAddress" onkeyup="EnableDisable(this)">
         </div>
         <div id ="display-wrapper" class="top-20">
         </div>
@@ -59,18 +59,44 @@
                 <option value="UDE 257">UDE 257</option>
                 <option value="BRE 896">BRE 896</option>
             </select>
-            <input type="submit" value ="Submit">
         </div>
 
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Click here to buy insurance</label> <input type="number" id="ether"> <btn class="btn btn-primary" id="submit-airlines">Submit Details</btn>
+            <label class="form">Click here to buy insurance</label> <input type="number" id="ether" onkeyup="EnableDisable(this)">
+            <br><br>
+            <btn class="btn btn-primary" id="submitCustomerDetails">Submit Details</btn>
         </div>
 
-
+        <div id="display-wrapper" class="top-20">
+        </div>
+        <div class="row top-20">
+            <label class="form">Status of fund</label> <input type="number" id="ether"> 
+            <btn class="btn btn-primary" id="withdraw-funds">Withdraw Funds</btn>
+        </div>
 
     </main>
+
+    <script>
+        function EnableDisable(customerAddress, ether) {
+    //Reference the Button.
+    var btnSubmit = document.getElementById("submitCustomerDetails");
+
+    //Verify the TextBox value.
+    if (customerAddress.value.trim() != "") {
+        //Disable the TextBox when TextBox has value.
+        submitCustomerDetails.disabled = false;
+    } else if (ether == 0 || ether > 1) {
+        //Disable the Enable the TextBox when TextBox has value.
+        submitCustomerDetails.disabled = false;
+    } else {
+        //Enable both the TextBox when TextBox is empty.
+        btnSubmit.disabled = true;
+    }
+};
+    </script>
+
 
 </body>
 

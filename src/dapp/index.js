@@ -31,6 +31,22 @@ import './flightsurety.css';
 
 })();
 
+/*function EnableDisable(customerAddress, ether) {
+    //Reference the Button.
+    var btnSubmit = document.getElementById("submitCustomerDetails");
+
+    //Verify the TextBox value.
+    if (customerAddress.value.trim() != "") {
+        //Disable the TextBox when TextBox has value.
+        submitCustomerDetails.disabled = false;
+    } else if (ether == 0 || ether > 1) {
+        //Disable the Enable the TextBox when TextBox has value.
+        submitCustomerDetails.disabled = false;
+    } else {
+        //Enable both the TextBox when TextBox is empty.
+        btnSubmit.disabled = true;
+    }
+}; */
 
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");
