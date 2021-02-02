@@ -11,7 +11,8 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    mapping( => address) private registeredAirlines;                    //mapping to find if the airlines are in the list of registered airlines
+    //mapping(Airlines => bool) private registeredAirlines;                    //mapping to find if the airlines are in the list of registered airlines
+
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -29,7 +30,6 @@ contract FlightSuretyData {
     {
         contractOwner = msg.sender;
     }
-
 
     struct Airlines {
         bool isRegistered;

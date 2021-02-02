@@ -34,8 +34,21 @@ contract FlightSuretyApp {
     }
 
     mapping(bytes32 => Flight) private flights;
+    
+    uint256 min_num_registered = 4;  // min number of registered airlines before requiring multisg from registered airlines
 
- 
+    uint256 min_fee_airlines = 10;   // min fee of airlines to register 
+
+    uint256 insurance_pay = 1;       // min insurance payment from the passenger
+
+
+    /********************************************************************************************/
+    /*                                       EVENTS                                */
+    /********************************************************************************************/
+
+
+   
+
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -64,6 +77,19 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier requireRegisteredAirlines()
+    {
+        require();                                       //calling the registered airline from data contract
+        _;
+    }
+
+    modifier requirePaidAirline()
+    {
+        require();                                       //calling if airlinepaid from data contract
+        _;
+    }
+
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -78,6 +104,7 @@ contract FlightSuretyApp {
                                 public 
     {
         contractOwner = msg.sender;
+
     }
 
     /********************************************************************************************/
@@ -102,14 +129,16 @@ contract FlightSuretyApp {
     *
     */   
     function registerAirline
-                            (   
+                            (bytes32 _Airline   
                             )
                             external
                             pure
                             returns(bool success, uint256 votes)
     {
 
-        if()
+        if(flights[_Airline].isRegistered == true) {
+
+        }
         return (success, 0);
     }
 
@@ -164,6 +193,23 @@ contract FlightSuretyApp {
 
         emit OracleRequest(index, airline, flight, timestamp);
     } 
+
+    /********************************************************************************************/
+    /*                                     SMART CONTRACT FUNCTIONS Airlines                       */
+    /********************************************************************************************/
+
+
+
+
+    /********************************************************************************************/
+    /*                                     SMART CONTRACT FUNCTIONS  Passenger                          */
+    /********************************************************************************************/
+
+
+
+    /********************************************************************************************/
+    /*                                     Oracle Management                            */
+    /********************************************************************************************/
 
 
 // region ORACLE MANAGEMENT
