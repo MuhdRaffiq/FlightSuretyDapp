@@ -46,8 +46,9 @@ contract FlightSuretyApp {
     /*                                       EVENTS                                */
     /********************************************************************************************/
 
-
-   
+    event airlineRegistered(address _address);
+    event airlinePaid(address _airlineAddress, uint256, bool _isPaid);
+    event airlineVoted(address _airlineAddress, bool _vote)
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -79,13 +80,19 @@ contract FlightSuretyApp {
 
     modifier requireRegisteredAirlines()
     {
-        require();                                       //calling the registered airline from data contract
+        require(flightSuretyData.getAirlinesRegisterionStatus(msg.sender), "Caller is not registered Airline");                                       //calling the registered airline from data contract
         _;
     }
 
     modifier requirePaidAirline()
     {
-        require();                                       //calling if airlinepaid from data contract
+        require(flightSuretyData.getAirlinesPaidStatus(msg.sender));                                       //calling if airline has paid from data contract
+        _;
+    }
+
+    modifier requireNonVotedAirline()
+    {
+        require(flightSuretyData.getAirlinesVoteStatus(msg.sender));
         _;
     }
 
@@ -116,7 +123,7 @@ contract FlightSuretyApp {
                             pure 
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return FlightSuretyData.isOperational();  // Modify to call data contract's status
     }
 
     /********************************************************************************************/
@@ -129,33 +136,90 @@ contract FlightSuretyApp {
     *
     */   
     function registerAirline
-                            (bytes32 _Airline   
+                            (address _airline   
                             )
                             external
                             pure
+                            payable
+                            requireRegisteredAirlines
+                            isOperational
                             returns(bool success, uint256 votes)
     {
+        require(!flightSuretyData.hasAirlineAlreadyVoted(_address, msg.sender), "Airline cannot vote twice for same airline");
+        require(!flightSuretyData.hasAirlinePaidFee(_address), "Airline that is about to register has not yet pay the fee");
 
-        if(flights[_Airline].isRegistered == true) {
+        uint256 numberOfPaidAirlines = flightSuretyData.numberOfPaidAirlines();
+        uint256 numberOfVotes = flightSuretyData.numberOfVotesAirlines()   //figure out, find number of vote
 
+        if (numberOfPaidAirlines < min_num_registered) {
+            FlightSuretyData.registerAirlineData(_airline, msg.sender, true);
+            return (success, 0);
+
+             emit airlineRegistered(_address);
+        } else if (numberOfPaidAirlines >= min_num_registered && numberOfVotes > (numberOfPaidAirlines/2)) {
+            FlightSuretyData.registerAirlineData(_airline, msg.sender, true);
+            return (success, 0);
+
+             emit airlineRegistered(_address);
+        } else {
+            return (fail, 0);
         }
-        return (success, 0);
+
+      flightSuretyData.removeVotedData(); // need to put function here where you remove the voting data in flightSuretyData
     }
 
 
    /**
+    * @dev pay for registering 
+    *
+    */  
+    function payAirline
+                                (
+                                )
+                                external
+                                pure
+                                payable
+                                isOperational
+    {
+        flightSuretyData.payFeeAirline(msg.sender, msg.value, min_fee_airlines);
+
+        emit airlinePaid(msg.sender, msg.value, flightSuretyData.isAirlineFunded(msg.sender));
+    }
+    
+/**
+    * @dev registered ailines vote for airline that will be registered
+    *
+    */  
+    function voteAirline
+                                (
+                                address _registeredAirlines, bool _vote
+                                )
+                                external
+                                pure
+                                isOperational
+                                requireRegisteredAirlines
+                                requireNonVotedAirline
+    {
+        flightSuretyData.voteAirline(msg.sender, _vote);
+
+        emit airlineVoted(msg.sender, _vote);
+    }
+
+    /**
     * @dev Register a future flight for insuring.
     *
     */  
     function registerFlight
                                 (
+                                
                                 )
                                 external
                                 pure
     {
 
     }
-    
+
+
    /**
     * @dev Called after oracle has updated flight status
     *

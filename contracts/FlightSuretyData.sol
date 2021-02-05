@@ -34,8 +34,12 @@ contract FlightSuretyData {
     struct Airlines {
         bool isRegistered;
         uint8 statusCode;
-        uint256 updatedTimestamp;       
+        uint256 updatedTimestamp;
+
     }
+
+    mapping( => Airlines) private Airline;
+
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -105,7 +109,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirline
+    function registerAirlineData
                             (   
                             )
                             external
@@ -196,8 +200,18 @@ contract FlightSuretyData {
 /********************************************************************************************/
 
 
+// Modifier
+// require registered airlines to perform
 modifier requireRegisteredAirlines()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
+
+
+// SMART CONTRACTS
+
+function getAirlinesRegisterionStatus
+                    (
+                    address _
+                    ) 
