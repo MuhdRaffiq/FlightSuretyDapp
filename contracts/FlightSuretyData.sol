@@ -11,8 +11,8 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    //mapping(Airlines => bool) private registeredAirlines;                    //mapping to find if the airlines are in the list of registered airlines
-
+    uint256 private airlineFunds = 0 ether;                             // balance for funds from airlines registration
+    uint256 private insuranceFunds = 0 ether;                           // balance for insurance
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -23,22 +23,65 @@ contract FlightSuretyData {
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor
-                                (
-                                ) 
-                                public 
-    {
-        contractOwner = msg.sender;
-    }
 
-    struct Airlines {
+    struct Airline {
+        address airline;
         bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;
-
+        uint256 feePaid;
+        uint256 regIndex;
+        bool isFunded;
+        //mapping(address => bool) isVoted;
+        uint numVotes;
     }
 
-    mapping( => Airlines) private Airline;
+    //Flight struct
+    struct Flight {
+        string flightName;
+        bool isRegistered;
+        uint256 flightDateTime;
+        uint256 regIndex;
+        address airline;
+        uint256 statusCode;
+        uint256 updatedTimestamp;
+        address[] insuredPassengers;
+        mapping(address => uint256) insuredPassengerAddress;
+    }
+
+    struct Passenger {
+        bool isPaid;
+        uint256 paidAmount;
+        bytes32 flightId;
+        bool eligiblePayout;
+        uint256 insuranceAmount;
+    }
+
+    Airline[] private airlines;
+    mapping(address => Airline) private _registeredAirlines;
+    mapping(address => bool) private _airlineFunded;
+
+    //string mapping flight
+    mapping(bytes32 => Flight) private flightsMapping;
+    bytes32[] private flightsArray;
+
+    //mapping of passenger
+    mapping(address => Passenger) private passengers;
+
+    event AirlineDetails();
+    event PaidFee(address airline, uint amount, uint balance);
+
+    /*
+    mapping(address => votedAirline) private votedAirlines;
+    mapping (bytes32 => Flight) private flights; */
+
+    /**
+    * @dev Constructor
+    *      The deploying account becomes contractOwner
+    */
+    constructor(address airline) public payable {
+        contractOwner = msg.sender;
+        _registerAirline(airline, true, 0, 0);
+    }
+
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -67,6 +110,27 @@ contract FlightSuretyData {
         _;
     }
 
+    /**
+    * @dev Modifier that requires the "ContractOwner" account to be the function caller
+    */
+    modifier isAirlineRegistered()
+    {
+        require(_registeredAirlines[msg.sender].isRegistered == true, "Caller is not contract owner");
+        _;
+    }
+
+    modifier isPassengerPaid()
+    {
+        require(passengers[msg.sender].isPaid == false, "Caller has paid");
+        _;
+    }
+
+    modifier isFlightregistered(bytes32 flight)
+    {
+        require(flightsMapping[flight].isRegistered == true, "flight has not been registere");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -76,11 +140,7 @@ contract FlightSuretyData {
     *
     * @return A bool that is the current operating status
     */      
-    function isOperational() 
-                            public 
-                            view 
-                            returns(bool) 
-    {
+    function isOperational() public view returns(bool) {
         return operational;
     }
 
@@ -90,13 +150,7 @@ contract FlightSuretyData {
     *
     * When operational mode is disabled, all write transactions except for this one will fail
     */    
-    function setOperatingStatus
-                            (
-                                bool mode
-                            ) 
-                            external
-                            requireContractOwner 
-    {
+    function setOperatingStatus (bool mode) external isAirlineRegistered {
         operational = mode;
     }
 
@@ -104,92 +158,243 @@ contract FlightSuretyData {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+
    /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirlineData
-                            (   
-                            )
-                            external
-                            pure
-    {
+    function registerAirline(address airline, bool isRegistered, uint256 regIndex, uint256 numVotes) external requireIsOperational isAirlineRegistered {
+        _registerAirline(airline, isRegistered, regIndex, numVotes);
     }
 
 
-   /**
-    * @dev Buy insurance for a flight
+    /**
+    * @dev Add an airline to the registration queue
+    *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function buy
-                            (                             
-                            )
-                            external
-                            payable
-    {
+    function _registerAirline(address _airline, bool _isregistered, uint256 _regIndex, uint256 _numVotes) private {
+        
+        airlines.push(Airline({
+            airline: _airline,
+            isRegistered: _isregistered,
+            feePaid:0,
+            regIndex: _regIndex,
+            isFunded: false,
+            numVotes: _numVotes
+
+        }));
+        
+        _registeredAirlines[_airline].airline = _airline;
+        _registeredAirlines[_airline].isRegistered = _isregistered;
+        _registeredAirlines[_airline].feePaid = 0;
+        _registeredAirlines[_airline].regIndex = _regIndex;
+        _registeredAirlines[_airline].isFunded = false;
+        _registeredAirlines[_airline].numVotes = _numVotes;
 
     }
 
     /**
-     *  @dev Credits payouts to insurees
-    */
-    function creditInsurees
-                                (
-                                )
-                                external
-                                pure
-    {
+    * @dev check if airline is registered
+    *      Can only be called from FlightSuretyApp contract
+    *
+    */   
+    function checkAirlineRegistered (address airline) requireIsOperational isAirlineRegistered returns (bool) {
+        return _registeredAirlines[airline].isRegistered;
+    }
+
+    /**
+    * @dev airline is paid by the airline address
+    *      Can only be called from FlightSuretyApp contract
+    *
+    */   
+    function payFeeAirline(address airline, uint256 fee) external payable requireIsOperational isAirlineRegistered{
+        _payFeeAirline(airline, fee);
+    }
+
+    /**
+    * @dev airline is paid by the airline address
+    *      Can only be called from FlightSuretyApp contract
+    *
+    */   
+    function _payFeeAirline (address _airline, uint256 _fee) payable {
+        _registeredAirlines[_airline].isFunded = true;
+        _registeredAirlines[_airline].feePaid = _fee;
+
+        //contributions[msg.sender] += msg.value;
+        airlineFunds = airlineFunds.add(_fee);
+
+
+        emit PaidFee(msg.sender, msg.value, airlineFunds);
     }
     
+    /**
+    * @dev getting balance of funds held in this contract address
+    *
+    */   
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /**
+    * @dev check if the airline is funded
+    *
+    *
+    */   
+    function isAirlineFunded (address _airline) public view requireIsOperational returns (bool) {
+        return _registeredAirlines[_airline].isFunded;
+    }
+
+
+    /**
+    * @dev Add an flight to the the data
+    *
+    */   
+    function registerFlight(bytes32 key, address airline, bool status, string flightName, uint256 timestamp, uint8 statusCode) external requireIsOperational {
+        _registerFlight(key, airline, status, flightName, timestamp, statusCode);
+    }
+
+    /**
+    * @dev Add an flight to the the data
+    *
+    */   
+    function _registerFlight(bytes32 _key, address _airline, bool _status, string _flightName, uint256 _timestamp, uint8 _statusCode) private {
+        
+        flightsMapping[_key].flightName = _flightName;
+        flightsMapping[_key].flightDateTime = _timestamp;
+        flightsMapping[_key].airline = _airline;
+        flightsMapping[_key].statusCode = _statusCode;
+        flightsMapping[_key].isRegistered = true;
+        flightsArray.push(_key);
+    }
+
+    /**
+    * @dev get the flight registration status
+    *
+    */   
+    function registeredFlight (bytes32 keyFlight) external requireIsOperational returns (bool status) {
+        return (flightsMapping[keyFlight].isRegistered);
+    }
+
+    
+    /**
+    * @dev getting the flight data
+    *
+    */
+    /*
+    function fetchFlightData (bytes32 key) external view requireIsOperational returns (string memory, uint256, address, uint8) {
+        require(flightsMapping[key].airline != address(0));
+
+
+
+        return (flightsMapping[key].flightName, flightsMapping[key].flightDateTime, flightsMapping[key].airline, flightsMapping[key].statusCode);
+    }
+    */
+
+    /**
+    * @dev set flight the status 
+    *
+    */
+    function setFlightStatus (bytes32 key, uint8 status) external requireIsOperational {
+        require(status != flightsMapping[key].statusCode, "Status code already set");
+        flightsMapping[key].statusCode = status;
+    }
+
+    /**
+    * @dev Initial funding for the insurance. Unless there are too many delayed flights
+    *      resulting in insurance payouts, the contract should be self-sustaining
+    *
+    *
+    */   
+    function fund (address passengerAddress, uint pay, bytes32 flightId) public view requireIsOperational isPassengerPaid isFlightregistered(flightId) returns (bool success) {
+        
+        passengers[passengerAddress].isPaid = true;
+        passengers[passengerAddress].paidAmount = pay;
+        passengers[passengerAddress].flightId = flightId;
+        passengers[passengerAddress].eligiblePayout = false;
+        flightsMapping[flightId].insuredPassengers.push(passengerAddress);
+        flightsMapping[flightId].insuredPassengerAddress[passengerAddress] = pay;
+        passengers[passengerAddress].insuranceAmount = pay.div(2) + pay;
+
+        insuranceFunds = insuranceFunds.add(passengers[passengerAddress].insuranceAmount);
+
+        return true;
+        
+        emit PaidFee(msg.sender, msg.value, address(this).balance);
+    }
+
+    function passengerInsuranceInfo (address _passengerAddress) public view requireIsOperational returns (bool paid, uint256 amount, bytes32 flightId, bool payoutStatus) {
+        paid = passengers[_passengerAddress].isPaid;
+        amount = passengers[_passengerAddress].paidAmount;
+        flightId = passengers[_passengerAddress].flightId;
+        payoutStatus = passengers[_passengerAddress].eligiblePayout;
+
+        return (paid, amount, flightId, payoutStatus);
+    }
+
 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function pay
-                            (
-                            )
-                            external
-                            pure
-    {
+    function payout (address passengerAddress, bytes32 flightkey) external payable requireIsOperational {
+        require(passengers[passengerAddress].eligiblePayout, "not eligible for payout");
+
+        Passenger storage passenger = passengers[passengerAddress];
+
+        //passenger.PaidAmount = 0;
+        passenger.flightId = "";
+        flightsMapping[flightkey].insuredPassengerAddress[passengerAddress] = 0;
+        uint256 pay = passengers[passengerAddress].insuranceAmount;
+        insuranceFunds = insuranceFunds.sub(pay);
+
+        passengerAddress.transfer(pay);
+
     }
 
-   /**
-    * @dev Initial funding for the insurance. Unless there are too many delayed flights
-    *      resulting in insurance payouts, the contract should be self-sustaining
-    *
-    */   
-    function fund
-                            (   
-                            )
-                            public
-                            payable
-    {
+     /**
+     *  @dev processing the flight 
+     *
+    */
+    function processFlights (bytes32 flightkey, bool isLate) external requireIsOperational {
+        uint256 passenger;
+        uint256 payAmount;
+
+        if (isLate) {
+            for (passenger = 0; passenger < flightsMapping[flightkey].insuredPassengers.length; passenger++) {
+                if(passengers[flightsMapping[flightkey].insuredPassengers[passenger]].isPaid) {
+
+                    //payAmount = passengers[flightsMapping[flightkey].insuredPassengers[passenger]].paidAmount;
+                    
+                    passengers[flightsMapping[flightkey].insuredPassengers[passenger]].eligiblePayout = true;
+
+                    //passengers[flightsMapping[flightkey].insuredPassengers[passenger]].paidAmount= 0;
+
+                    //passengers[flightsMapping[flightkey].insuredPassengers[passenger]].insuranceAmount = payout*1.5;
+
+                    //insuranceFunds = insuranceFunds.sub(insuranceAmount*1.5);
+                    flightsMapping[flightkey].insuredPassengers.length = 0;
+                }
+            }
+        } else{
+            
+
+            //need to understasd what to do if it is not late
+        }
     }
 
-    function getFlightKey
-                        (
-                            address airline,
-                            string memory flight,
-                            uint256 timestamp
-                        )
-                        pure
-                        internal
-                        returns(bytes32) 
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
+
+    function getFlightData (bytes32 key) external view requireIsOperational returns(string, uint256, address, uint256) {
+        return (flightsMapping[key].flightName, flightsMapping[key].flightDateTime, flightsMapping[key].airline, flightsMapping[key].statusCode);
     }
 
     /**
     * @dev Fallback function for funding smart contract.
     *
     */
-    function() 
-                            external 
-                            payable 
-    {
-        fund();
+    function() external payable {
+
     }
 
 
@@ -202,16 +407,42 @@ contract FlightSuretyData {
 
 // Modifier
 // require registered airlines to perform
-modifier requireRegisteredAirlines()
+/* modifier requireRegisteredAirlines()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
 
-
+*/
 // SMART CONTRACTS
+/*
+function getAirlinesRegisterionStatus (address airline) internal requireIsOperational return(bool) {
+    return Airlines[airline].isRegistered;
+    }
 
-function getAirlinesRegisterionStatus
-                    (
-                    address _
-                    ) 
+
+function registerFlight (bytes25 key, address airline, bool status, string flightName, uint256 timestamp, uint256 statusCode) pure internal requireIsOperational {
+    flights[key].airline = airline;
+    flights[key].isRegistered = status;
+    flights[key].flightName = flightName;
+    flights[key].timestamp = timestamp;
+    flights[key].statusCode = statusCode;
+    currentFlights.push(key);   
+    }
+
+/**
+    * @dev Add an airline to the registration queue
+    *      Can only be called from FlightSuretyApp contract
+    *
+     
+    function registerAirlineData (address airline, bool  ) external pure {
+    }
+
+
+
+
+function removeVotedData (bytes32 key) pure internal requireIsOperational {
+    delete(VotedAirlines[key]);
+    }
+
+    */
