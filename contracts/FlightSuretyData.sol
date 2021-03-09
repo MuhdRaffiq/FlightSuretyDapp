@@ -55,9 +55,10 @@ contract FlightSuretyData {
         uint256 insuranceAmount;
     }
 
-    Airline[] private airlines;
-    mapping(address => Airline) public _registeredAirlines;
-    mapping(address => bool) private _airlineFunded;
+    uint256 index = 0;
+    uint256[] private airlines;                                     //used to know how many have registered to know how many should the multi sig logic is done for app smart contracts
+    mapping(address => Airline) public registeredAirlines;          //used for storing registering Airlines data
+    mapping(address => bool) private _airlineFunded;                // used for storing if the airlines have paid the fee after registering
 
     //string mapping flight
     mapping(bytes32 => Flight) private flightsMapping;
@@ -115,9 +116,10 @@ contract FlightSuretyData {
     */
     modifier isAirlineRegistered()
     {
-        require(_registeredAirlines[msg.sender].isRegistered == true, "Caller is not contract owner");
+        require(registeredAirlines[msg.sender].isRegistered == true, "Caller is not contract owner");
         _;
     }
+    
 
     modifier isPassengerPaid()
     {
@@ -176,22 +178,15 @@ contract FlightSuretyData {
     */   
     function _registerAirline(address _airline, bool _isregistered, uint256 _regIndex, uint256 _numVotes) private {
         
-        airlines.push(Airline({
-            airline: _airline,
-            isRegistered: _isregistered,
-            feePaid:0,
-            regIndex: _regIndex,
-            isFunded: false,
-            numVotes: _numVotes
-
-        }));
+        airlines.push(index);
+        index = index + 1;
         
-        _registeredAirlines[_airline].airline = _airline;
-        _registeredAirlines[_airline].isRegistered = _isregistered;
-        _registeredAirlines[_airline].feePaid = 0;
-        _registeredAirlines[_airline].regIndex = _regIndex;
-        _registeredAirlines[_airline].isFunded = false;
-        _registeredAirlines[_airline].numVotes = _numVotes;
+        registeredAirlines[_airline].airline = _airline;
+        registeredAirlines[_airline].isRegistered = _isregistered;
+        registeredAirlines[_airline].feePaid = 0;
+        registeredAirlines[_airline].regIndex = _regIndex;
+        registeredAirlines[_airline].isFunded = false;
+        registeredAirlines[_airline].numVotes = _numVotes;
 
     }
 
@@ -200,9 +195,8 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function checkAirlineRegistered(address checkAirline) external requireIsOperational returns (bool AirlineStatus) {
-        bool AirlineStatus = _registeredAirlines[checkAirline].isRegistered;
-        return (AirlineStatus);
+    function checkAirlineRegistered(address checkAirline) external view returns(bool success) {
+        return registeredAirlines[checkAirline].isRegistered;
     }
 
     /**
@@ -220,8 +214,8 @@ contract FlightSuretyData {
     *
     */   
     function _payFeeAirline (address _airline, uint256 _fee) public payable {
-        _registeredAirlines[_airline].isFunded = true;
-        _registeredAirlines[_airline].feePaid = _fee;
+        registeredAirlines[_airline].isFunded = true;
+        registeredAirlines[_airline].feePaid = _fee;
 
         //contributions[msg.sender] += msg.value;
         airlineFunds = airlineFunds.add(_fee);
@@ -244,7 +238,7 @@ contract FlightSuretyData {
     *
     */   
     function isAirlineFunded (address _airline) public requireIsOperational returns (bool) {
-        return _registeredAirlines[_airline].isFunded;
+        return registeredAirlines[_airline].isFunded;
     }
 
 

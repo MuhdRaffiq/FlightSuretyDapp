@@ -93,7 +93,7 @@ contract FlightSuretyApp {
 
     modifier requireRegisteredAirlines()
     {
-        require(FlightSuretyData.checkAirlineRegistered(msg.sender) == true, "Caller is not registered Airline");                                       //calling the registered airline from data contract
+        require(FlightSuretyData.checkAirlineRegistered(msg.sender), "Caller is not registered Airline");                                       //calling the registered airline from data contract
         _;
     }
 
