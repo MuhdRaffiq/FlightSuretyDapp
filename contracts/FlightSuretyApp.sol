@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.5.0;
 
 // It's important to avoid vulnerabilities due to numeric overflow bugs
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
@@ -96,6 +96,7 @@ contract FlightSuretyApp {
         require(FlightSuretyData.checkAirlineRegistered(msg.sender) == true, "Caller is not registered Airline");                                       //calling the registered airline from data contract
         _;
     }
+
 
     modifier requirePaidAirline()
     {
@@ -258,7 +259,7 @@ contract FlightSuretyApp {
     * @dev Register a future flight for insuring.
     *
     */  
-    function registerFlight (string flightName, uint256 timestamp) external requireIsOperational {
+    function registerFlight (string calldata flightName, uint256 timestamp) external requireIsOperational {
         bytes32 key = createFlightkey(msg.sender, flightName, timestamp);
         require(!FlightSuretyData.registeredFlight(key), 'Flight has been registered');
         
@@ -273,7 +274,7 @@ contract FlightSuretyApp {
     * @dev create an ID by hashing the 3 variables here.
     *
     */  
-    function createFlightkey (address airline, string flightName, uint256 timestamp) requireIsOperational returns (bytes32) {   
+    function createFlightkey (address airline, string memory flightName, uint256 timestamp) public requireIsOperational returns (bytes32) {   
         return keccak256(abi.encodePacked(airline, flightName, timestamp));
     }
 
@@ -408,7 +409,7 @@ contract FlightSuretyApp {
                             )
                             view
                             external
-                            returns(uint8[3])
+                            returns(uint8[3] memory)
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
@@ -426,7 +427,7 @@ contract FlightSuretyApp {
                         (
                             uint8 index,
                             address airline,
-                            string flight,
+                            string calldata flight,
                             uint256 timestamp,
                             uint8 statusCode
                         )
@@ -456,7 +457,7 @@ contract FlightSuretyApp {
     function getFlightKey
                         (
                             address airline,
-                            string flight,
+                            string memory flight,
                             uint256 timestamp
                         )
                         pure
@@ -472,7 +473,7 @@ contract FlightSuretyApp {
                                 address account         
                             )
                             internal
-                            returns(uint8[3])
+                            returns(uint8[3] memory)
     {
         uint8[3] memory indexes;
         indexes[0] = getRandomIndex(account);

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.5.0;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -56,7 +56,7 @@ contract FlightSuretyData {
     }
 
     Airline[] private airlines;
-    mapping(address => Airline) private _registeredAirlines;
+    mapping(address => Airline) public _registeredAirlines;
     mapping(address => bool) private _airlineFunded;
 
     //string mapping flight
@@ -200,8 +200,9 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function checkAirlineRegistered (address airline) requireIsOperational isAirlineRegistered returns (bool) {
-        return _registeredAirlines[airline].isRegistered;
+    function checkAirlineRegistered(address checkAirline) external requireIsOperational returns (bool AirlineStatus) {
+        bool AirlineStatus = _registeredAirlines[checkAirline].isRegistered;
+        return (AirlineStatus);
     }
 
     /**
@@ -218,7 +219,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function _payFeeAirline (address _airline, uint256 _fee) payable {
+    function _payFeeAirline (address _airline, uint256 _fee) public payable {
         _registeredAirlines[_airline].isFunded = true;
         _registeredAirlines[_airline].feePaid = _fee;
 
@@ -242,7 +243,7 @@ contract FlightSuretyData {
     *
     *
     */   
-    function isAirlineFunded (address _airline) public view requireIsOperational returns (bool) {
+    function isAirlineFunded (address _airline) public requireIsOperational returns (bool) {
         return _registeredAirlines[_airline].isFunded;
     }
 
@@ -251,7 +252,7 @@ contract FlightSuretyData {
     * @dev Add an flight to the the data
     *
     */   
-    function registerFlight(bytes32 key, address airline, bool status, string flightName, uint256 timestamp, uint8 statusCode) external requireIsOperational {
+    function registerFlight(bytes32 key, address airline, bool status, string calldata flightName, uint256 timestamp, uint8 statusCode) external requireIsOperational {
         _registerFlight(key, airline, status, flightName, timestamp, statusCode);
     }
 
@@ -259,7 +260,7 @@ contract FlightSuretyData {
     * @dev Add an flight to the the data
     *
     */   
-    function _registerFlight(bytes32 _key, address _airline, bool _status, string _flightName, uint256 _timestamp, uint8 _statusCode) private {
+    function _registerFlight(bytes32 _key, address _airline, bool _status, string memory _flightName, uint256 _timestamp, uint8 _statusCode) private {
         
         flightsMapping[_key].flightName = _flightName;
         flightsMapping[_key].flightDateTime = _timestamp;
@@ -338,7 +339,7 @@ contract FlightSuretyData {
      *  @dev Transfers eligible payout funds to insuree
      *
     */
-    function payout (address passengerAddress, bytes32 flightkey) external payable requireIsOperational {
+    function payout (address payable passengerAddress, bytes32 flightkey) external payable requireIsOperational {
         require(passengers[passengerAddress].eligiblePayout, "not eligible for payout");
 
         Passenger storage passenger = passengers[passengerAddress];
@@ -385,7 +386,7 @@ contract FlightSuretyData {
     }
 
 
-    function getFlightData (bytes32 key) external view requireIsOperational returns(string, uint256, address, uint256) {
+    function getFlightData (bytes32 key) external view requireIsOperational returns(string memory, uint256, address, uint256) {
         return (flightsMapping[key].flightName, flightsMapping[key].flightDateTime, flightsMapping[key].airline, flightsMapping[key].statusCode);
     }
 
