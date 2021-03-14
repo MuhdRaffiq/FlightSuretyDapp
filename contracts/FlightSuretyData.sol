@@ -13,6 +13,7 @@ contract FlightSuretyData {
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     uint256 private airlineFunds = 0 ether;                             // balance for funds from airlines registration
     uint256 private insuranceFunds = 0 ether;                           // balance for insurance
+    mapping(address => bool) private authorizedCallers;
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -33,6 +34,8 @@ contract FlightSuretyData {
         //mapping(address => bool) isVoted;
         uint numVotes;
     }
+
+    mapping(address => Airline) public registeredAirlines;
 
     //Flight struct
     struct Flight {
@@ -55,9 +58,8 @@ contract FlightSuretyData {
         uint256 insuranceAmount;
     }
 
-    uint256 index = 0;
-    uint256[] private airlines;                                     //used to know how many have registered to know how many should the multi sig logic is done for app smart contracts
-    mapping(address => Airline) public registeredAirlines;          //used for storing registering Airlines data
+    uint256 index;
+    uint256[] private airlines;                                     //used to know how many have registered to know how many should the multi sig logic is done for app smart contracts        //used for storing registering Airlines data
     mapping(address => bool) private _airlineFunded;                // used for storing if the airlines have paid the fee after registering
 
     //string mapping flight
@@ -68,7 +70,8 @@ contract FlightSuretyData {
     mapping(address => Passenger) private passengers;
 
     event AirlineDetails();
-    event PaidFee(address airline, uint amount, uint balance);
+    event PaidFee(address airline, uint256 amount, uint256 balance);
+    event ContractAuthorized(address _contractId);
 
     /*
     mapping(address => votedAirline) private votedAirlines;
@@ -81,6 +84,7 @@ contract FlightSuretyData {
     constructor(address airline) public payable {
         contractOwner = msg.sender;
         _registerAirline(airline, true, 0, 0);
+        index = 0;
     }
 
 
@@ -137,6 +141,11 @@ contract FlightSuretyData {
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
+    function authorizeCaller(address contractAddress) external requireContractOwner{
+        require(authorizedCallers[contractAddress] == false, "Address has already be registered");
+        authorizedCallers[contractAddress] = true;
+        emit ContractAuthorized(contractAddress);
+    }
     /**
     * @dev Get operating status of contract
     *
@@ -241,6 +250,16 @@ contract FlightSuretyData {
         return registeredAirlines[_airline].isFunded;
     }
 
+    /**
+    * @dev check number of airline registered
+    *
+    *
+    */   
+    function checkNumberAirlines () public requireIsOperational returns (uint256) {
+        return airlines.length;
+    }
+
+
 
     /**
     * @dev Add an flight to the the data
@@ -260,7 +279,7 @@ contract FlightSuretyData {
         flightsMapping[_key].flightDateTime = _timestamp;
         flightsMapping[_key].airline = _airline;
         flightsMapping[_key].statusCode = _statusCode;
-        flightsMapping[_key].isRegistered = true;
+        flightsMapping[_key].isRegistered = _status;
         flightsArray.push(_key);
     }
 
@@ -302,7 +321,7 @@ contract FlightSuretyData {
     *
     *
     */   
-    function fund (address passengerAddress, uint pay, bytes32 flightId) public view requireIsOperational isPassengerPaid isFlightregistered(flightId) returns (bool success) {
+    function fund (address payable passengerAddress, uint pay, bytes32 flightId) public requireIsOperational isPassengerPaid isFlightregistered(flightId) returns (bool success) {
         
         passengers[passengerAddress].isPaid = true;
         passengers[passengerAddress].paidAmount = pay;
@@ -316,7 +335,7 @@ contract FlightSuretyData {
 
         return true;
         
-        emit PaidFee(msg.sender, msg.value, address(this).balance);
+        emit PaidFee(msg.sender, pay, address(this).balance);
     }
 
     function passengerInsuranceInfo (address _passengerAddress) public view requireIsOperational returns (bool paid, uint256 amount, bytes32 flightId, bool payoutStatus) {
@@ -352,9 +371,9 @@ contract FlightSuretyData {
      *  @dev processing the flight 
      *
     */
-    function processFlights (bytes32 flightkey, bool isLate) external requireIsOperational {
+    function processFlightStatus (bytes32 flightkey, bool isLate) external requireIsOperational {
         uint256 passenger;
-        uint256 payAmount;
+        //uint256 payAmount;
 
         if (isLate) {
             for (passenger = 0; passenger < flightsMapping[flightkey].insuredPassengers.length; passenger++) {
@@ -391,7 +410,7 @@ contract FlightSuretyData {
     function() external payable {
 
     }
-
+    
 
 }
 

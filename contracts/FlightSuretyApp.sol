@@ -12,7 +12,7 @@ import "./FlightSuretyData.sol";
 /************************************************** */
 contract FlightSuretyApp {
     using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
-
+    FlightSuretyData flightSuretyData;
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
@@ -39,11 +39,11 @@ contract FlightSuretyApp {
 
     struct Registration {
         address airline;
-        uint256 feePaid;
+        //uint256 feePaid;
         bool executed;
         uint256 regIndex;
-        mapping(address => bool) isVoted;
-        uint numVotes;
+        mapping(address => bool) hasVoted;
+        uint256 numVotes;
     }
 
     Registration[] public registrations;
@@ -54,7 +54,7 @@ contract FlightSuretyApp {
     /*                                       EVENTS                                */
     /********************************************************************************************/
 
-    event airlineRegistered(address airline, uint256 regIndex);
+    event airlineRegistered(uint256 regIndex, address airline);
     event airlinePaid(address airline, uint256 fee);
     event flightRegistered(string flightName, uint256 timestamp, bytes32 id);
     event passengerBuyInsurance(address passenger, bytes32 flightId);
@@ -93,14 +93,14 @@ contract FlightSuretyApp {
 
     modifier requireRegisteredAirlines()
     {
-        require(FlightSuretyData.checkAirlineRegistered(msg.sender), "Caller is not registered Airline");                                       //calling the registered airline from data contract
+        require(flightSuretyData.checkAirlineRegistered(msg.sender), "Caller is not registered Airline");                                       //calling the registered airline from data contract
         _;
     }
 
 
     modifier requirePaidAirline()
     {
-        require(FlightSuretyData.isAirlineFunded(msg.sender), "Caller has not yet paid the fee");                                       //calling if airline has paid from data contract
+        require(flightSuretyData.isAirlineFunded(msg.sender), "Caller has not yet paid the fee");                                       //calling if airline has paid from data contract
         _;
     }
 
@@ -113,20 +113,20 @@ contract FlightSuretyApp {
     modifier notExecuted(uint256 regIndex)
     {
         Registration storage registration = registrations[regIndex];
-        require(Registration.executed == false, "The airline registration has alredy been executed");
+        require(registration.executed == false, "The airline registration has alredy been executed");
         _;
     }
 
     modifier notVoted(uint256 regIndex)
     {   
         Registration storage registration = registrations[regIndex];
-        require(Registration.isVoted(msg.sender) == false, "You have voted for this registration");
+        require(!registration.hasVoted[msg.sender], "You have voted for this registration");
         _;
     }
 
     modifier flightRegistration(bytes32 keyFlight)
     {
-        require(!FlightSuretyData.registeredFlight(keyFlight), 'Flight has been registered');
+        require(!flightSuretyData.registeredFlight(keyFlight), 'Flight has been registered');
         _;
     }
 
@@ -147,7 +147,7 @@ contract FlightSuretyApp {
             numVotes: 0   
         }));
 
-        Registration storage registration = registrations[0];
+        //Registration storage registration = registrations[0];
         //FlightSuretyData.registerAirlineData(registration.airline, true, 0, 0);
 
     }
@@ -157,11 +157,10 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     function isOperational() 
-                            public 
-                            pure 
+                            public  
                             returns(bool) 
     {
-        return FlightSuretyData.isOperational();  // Modify to call data contract's status
+        return flightSuretyData.isOperational();  // Modify to call data contract's status
     }
 
     /********************************************************************************************/
@@ -198,7 +197,7 @@ contract FlightSuretyApp {
 
         Registration storage registration = registrations[_regIndex];
         registration.numVotes += 1;
-        isVoted[_regIndex][msg.sender] = true;
+        registration.hasVoted[msg.sender] = true;
 
         emit votedRegistration(msg.sender, _regIndex);
     }
@@ -208,10 +207,10 @@ contract FlightSuretyApp {
     * @dev Submit Airline registration for other airline to know. Only applicable if more than 4 airlines registered
     *
     */  
-    function executeRegistration(uint _regIndex) public requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) {
-        require(!FlightSuretyData.checkAirlineRegistered(registrations[_regIndex].airline), "Airline is registered and cannot be registered again");
+    function executeRegistration(uint256 _regIndex) public requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) {
+        require(!flightSuretyData.checkAirlineRegistered(registrations[_regIndex].airline), "Airline is registered and cannot be registered again");
         
-        uint256 registeredAirlines = FlightSuretyData.registeredAirlines();
+        uint256 registeredAirlines = flightSuretyData.checkNumberAirlines();
         uint256 numVotesRequired = registeredAirlines/2;
 
         Registration storage registration = registrations[_regIndex];
@@ -222,18 +221,18 @@ contract FlightSuretyApp {
             
             registration.executed = true;
             
-            FlightSuretyData.registerAirline(registration.airline, true, _regIndex, 0);
+            flightSuretyData.registerAirline(registration.airline, true, _regIndex, 0);
             //return (success, 0);
 
             emit airlineRegistered(_regIndex, _airline);
 
         } else if(registeredAirlines > min_num_registered) {
             
-            require(Registration.numConfirmations >= numVotesRequired, "cannot execute registration");
+            require(registration.numVotes >= numVotesRequired, "cannot execute registration");
 
             registration.executed = true;
 
-            FlightSuretyData.registerAirline(registration.airline, true, _regIndex, registration.numVotes);
+            flightSuretyData.registerAirline(registration.airline, true, _regIndex, registration.numVotes);
 
 
             emit airlineRegistered(_regIndex, _airline);
@@ -250,7 +249,7 @@ contract FlightSuretyApp {
     function payAirline() external payable requireIsOperational requireRegisteredAirlines {
         require(msg.value > min_fee_airlines, "The fee provided is lower than minimum requested");
         
-        FlightSuretyData.payFeeAirline(msg.sender, msg.value);
+        flightSuretyData.payFeeAirline(msg.sender, msg.value);
         emit airlinePaid(msg.sender, msg.value);
     }
     
@@ -261,11 +260,11 @@ contract FlightSuretyApp {
     */  
     function registerFlight (string calldata flightName, uint256 timestamp) external requireIsOperational {
         bytes32 key = createFlightkey(msg.sender, flightName, timestamp);
-        require(!FlightSuretyData.registeredFlight(key), 'Flight has been registered');
+        require(!flightSuretyData.registeredFlight(key), 'Flight has been registered');
         
         bool status = true;
 
-        FlightSuretyData.registerFlight(key, msg.sender, status, flightName, timestamp, STATUS_CODE_UNKNOWN);
+        flightSuretyData.registerFlight(key, msg.sender, status, flightName, timestamp, STATUS_CODE_UNKNOWN);
 
         emit flightRegistered(flightName, timestamp, key);
     }
@@ -286,14 +285,14 @@ contract FlightSuretyApp {
     */  
     function processFlightStatus (address airline, string memory flight, uint256 timestamp, uint8 statusCode) public requireIsOperational {
         bytes32 key = createFlightkey(airline,flight, timestamp);
-        (, , , uint8 _status) = FlightSuretyData.getFlightData(key);
+        (, , , uint256 _status) = flightSuretyData.getFlightData(key);
         require(_status == 0, "This has been looked into");
-        FlightSuretyData.setFlightStatus(key, statusCode);
+        flightSuretyData.setFlightStatus(key, statusCode);
 
         if (statusCode == STATUS_CODE_LATE_AIRLINE){
-            FlightSuretyData.processFlightStatus(key,true);
+            flightSuretyData.processFlightStatus(key,true);
         } else {
-            FlightSuretyData.processFlightStatus(key,false);
+            flightSuretyData.processFlightStatus(key,false);
         }
 
     }
@@ -303,9 +302,9 @@ contract FlightSuretyApp {
     * @dev for passengers buy insurance
     *
     */  
-    function buyInsurance (bytes32 flightId) internal pure requireIsOperational {
+    function buyInsurance (bytes32 flightId) internal requireIsOperational {
         require(msg.value <= insurance_pay, 'The cost of insurance is 1 ether or below');
-        FlightSuretyData.fund(msg.sender, msg.value, flightId);
+        flightSuretyData.fund(msg.sender, msg.value, flightId);
         
         emit passengerBuyInsurance(msg.sender, flightId);
     }
@@ -315,9 +314,9 @@ contract FlightSuretyApp {
     * @dev to allow passenger to take out the funds due to late flight
     *
     */  
-    function withdrawalFunds () public payable requireIsOperational {
+    function withdrawalFunds (bytes32 flightkey) public payable requireIsOperational {
         //(bool paid, uint256 amount, bytes32 flightId , bool eligiblepayout) = flightSuretyData.passengerInsuranceInfo(msg.sender);
-        FlightSuretyData.payout(msg.sender);
+        flightSuretyData.payout(msg.sender, flightkey);
 
     }
 
@@ -329,7 +328,7 @@ contract FlightSuretyApp {
         //(string memory flightName, address airline, uint256 timestamp) = flightSuretyData(flightKey); 
     
         // Generate a unique key for storing the request
-        (string memory flightName, address airline, uint256 timestamp) = FlightSuretyData.getFlightData(flightkey);
+        (string memory flightName, uint256 timestamp, address airline, ) = flightSuretyData.getFlightData(flightkey);
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flightName, timestamp));
         
@@ -460,7 +459,7 @@ contract FlightSuretyApp {
                             string memory flight,
                             uint256 timestamp
                         )
-                        pure
+                        
                         internal
                         returns(bytes32) 
     {
