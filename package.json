@@ -36,12 +36,17 @@
     "start-server-webpack-plugin": "2.2.5",
     "style-loader": "^0.23.1",
     "superstatic": "6.0.3",
-    "truffle": "^5.1.46",
+    "truffle": "^5.2.4",
     "truffle-hdwallet-provider": "1.0.2",
     "web3": "^1.0.1",
     "webpack": "^4.6.0",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0",
     "webpack-node-externals": "1.7.2"
+  },
+  "dependencies": {
+    "cli": "^1.0.1",
+    "fs": "^0.0.1-security",
+    "fs-extra": "^0.30.0"
   }
 }

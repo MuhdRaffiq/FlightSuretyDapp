@@ -81,9 +81,9 @@ contract FlightSuretyData {
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor(address airline) public payable {
+    constructor() public payable {
         contractOwner = msg.sender;
-        _registerAirline(airline, true, 0, 0);
+        _registerAirline(msg.sender, true, 0, 0);
         index = 0;
     }
 
@@ -333,9 +333,10 @@ contract FlightSuretyData {
 
         insuranceFunds = insuranceFunds.add(passengers[passengerAddress].insuranceAmount);
 
+        emit PaidFee(msg.sender, pay, address(this).balance);
+
         return true;
         
-        emit PaidFee(msg.sender, pay, address(this).balance);
     }
 
     function passengerInsuranceInfo (address _passengerAddress) public view requireIsOperational returns (bool paid, uint256 amount, bytes32 flightId, bool payoutStatus) {
