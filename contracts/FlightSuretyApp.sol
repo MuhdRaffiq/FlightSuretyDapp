@@ -138,14 +138,17 @@ contract FlightSuretyApp {
     * @dev Contract constructor
     *
     */
-    constructor() public {
+    constructor(address payable _dataContract) public {
         contractOwner = msg.sender;
+
         registrations.push(Registration({
             airline: msg.sender,
             executed: true,
             regIndex: 0,
             numVotes: 0   
         }));
+
+        flightSuretyData = FlightSuretyData(_dataContract);
 
         //Registration storage registration = registrations[0];
         //FlightSuretyData.registerAirlineData(registration.airline, true, 0, 0);

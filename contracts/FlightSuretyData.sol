@@ -81,9 +81,10 @@ contract FlightSuretyData {
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor() public payable {
+    constructor(address airline) public payable {
         contractOwner = msg.sender;
-        _registerAirline(msg.sender, true, 0, 0);
+        _registerAirline(airline, true, 0, 0);
+        //_payFeeAirline(airline, msg.value);
         index = 0;
     }
 

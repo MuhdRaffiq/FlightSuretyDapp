@@ -4,10 +4,10 @@ const fs = require('fs');
 
 module.exports = function(deployer) {
 
-    let firstAirline = '0xf17f52151EbEF6C7334FAD080c5704D77216b732';
-    deployer.deploy(FlightSuretyData)
+    let firstAirline = '0x627306090abaB3A6e1400e9345bC60c78a8BEf57';
+    deployer.deploy(FlightSuretyData, firstAirline)  // 
     .then(() => {
-        return deployer.deploy(FlightSuretyApp, FlightSuretyData.address)
+        return deployer.deploy(FlightSuretyApp, FlightSuretyData.address)    //here flightSuretyApp is taking flightsuretydata contract address to be put into the constructor's parameter0
                 .then(() => {
                     let config = {
                         localhost: {
