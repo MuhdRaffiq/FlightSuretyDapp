@@ -48,6 +48,7 @@ contract FlightSuretyApp {
 
     Registration[] public registrations;
 
+    mapping(address => uint256) public regIndexAirline;
     mapping(address => bool) public isVoted;
 
     /********************************************************************************************/
@@ -148,6 +149,7 @@ contract FlightSuretyApp {
             numVotes: 0   
         }));
 
+
         flightSuretyData = FlightSuretyData(_dataContract);
 
         //Registration storage registration = registrations[0];
@@ -174,7 +176,10 @@ contract FlightSuretyApp {
     * @dev Submit Airline registration for other airline to know. Only applicable if more than 4 airlines registered
     *
     */   
-    function submitRegistration (address _airline) external requireContractOwner requireRegisteredAirlines requireIsOperational {
+
+    //requireContractOwner requireRegisteredAirlines requireIsOperational
+
+    function submitRegistration (address _airline) external {
         
         uint256 _regIndex = registrations.length;
 
@@ -185,22 +190,45 @@ contract FlightSuretyApp {
             numVotes: 0   
         }));
 
+        regIndexAirline[_airline] = _regIndex;
+
         bool statusExecuted = false;
         uint256 numberOfVotes = 0;
 
-        emit submittedRegistration(msg.sender, _regIndex, statusExecuted, numberOfVotes);
+        emit submittedRegistration(_airline, _regIndex, statusExecuted, numberOfVotes);
+    }
+
+
+    function getRegIndex (address _airline) external returns (uint256) {
+        return regIndexAirline[_airline];       
+
+        //emit getIndex(index)
+    }
+
+
+    function getAirlineVote (uint256 _regIndex) external returns (bool) {
+        //Registration storage registration = registrations[_regIndex];
+        bool status =  registrations[_regIndex].hasVoted[msg.sender];
+        return (status);
     }
 
     /**
     * @dev Vote Airline registration. Only applicable if more than 4 airlines registered
     *
     */  
-    function voteRegistration (uint _regIndex) external requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) notVoted(_regIndex) {
+
+    //requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) notVoted(_regIndex)
+
+    function voteRegistration (uint _regIndex) external {
         
 
-        Registration storage registration = registrations[_regIndex];
-        registration.numVotes += 1;
-        registration.hasVoted[msg.sender] = true;
+        //Registration storage registration = registrations[_regIndex];
+        registrations[_regIndex].numVotes += 1;
+        registrations[_regIndex].hasVoted[msg.sender] = true;
+
+
+        //address airline = getRegIndex(_airline);
+        //isVoted[_regIndex] = true;  //not sure if you should do this because once voted you cant vote others
 
         emit votedRegistration(msg.sender, _regIndex);
     }
@@ -210,38 +238,45 @@ contract FlightSuretyApp {
     * @dev Submit Airline registration for other airline to know. Only applicable if more than 4 airlines registered
     *
     */  
-    function executeRegistration(uint256 _regIndex) public requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) {
-        require(!flightSuretyData.checkAirlineRegistered(registrations[_regIndex].airline), "Airline is registered and cannot be registered again");
+
+    //requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex)
+
+    function executeRegistration(uint256 _regIndex) external {
+        //require(!flightSuretyData.checkAirlineRegistered(registrations[_regIndex].airline), "Airline is registered and cannot be registered again");
         
         uint256 registeredAirlines = flightSuretyData.checkNumberAirlines();
-        uint256 numVotesRequired = registeredAirlines/2;
+        uint256 numVotesRequired = 3;
+        
+        //registeredAirlines/2;
 
-        Registration storage registration = registrations[_regIndex];
+        //Registration storage registration = registrations[_regIndex];
 
-        address _airline = registration.airline;
+        address _airline = registrations[_regIndex].airline;
 
         if(registeredAirlines <= min_num_registered) {
             
-            registration.executed = true;
+            registrations[_regIndex].executed = true;
             
-            flightSuretyData.registerAirline(registration.airline, true, _regIndex, 0);
+            flightSuretyData.registerAirline(registrations[_regIndex].airline, true, _regIndex, 0);
             //return (success, 0);
 
             emit airlineRegistered(_regIndex, _airline);
 
         } else if(registeredAirlines > min_num_registered) {
             
-            require(registration.numVotes >= numVotesRequired, "cannot execute registration");
+            require(registrations[_regIndex].numVotes >= numVotesRequired, "cannot execute registration");
 
-            registration.executed = true;
+            registrations[_regIndex].executed = true;
 
-            flightSuretyData.registerAirline(registration.airline, true, _regIndex, registration.numVotes);
+            flightSuretyData.registerAirline(registrations[_regIndex].airline, true, _regIndex, registrations[_regIndex].numVotes);
 
 
             emit airlineRegistered(_regIndex, _airline);
         } else {
             
         }
+
+
     }
   
 

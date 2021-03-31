@@ -64,7 +64,6 @@ contract FlightSuretyData {
 
     //string mapping flight
     mapping(bytes32 => Flight) private flightsMapping;
-    bytes32[] private flightsArray;
 
     //mapping of passenger
     mapping(address => Passenger) private passengers;
@@ -72,6 +71,7 @@ contract FlightSuretyData {
     event AirlineDetails();
     event PaidFee(address airline, uint256 amount, uint256 balance);
     event ContractAuthorized(address _contractId);
+    event OperationalStatusChanged(bool _state);
 
     /*
     mapping(address => votedAirline) private votedAirlines;
@@ -162,8 +162,10 @@ contract FlightSuretyData {
     *
     * When operational mode is disabled, all write transactions except for this one will fail
     */    
-    function setOperatingStatus (bool mode) external isAirlineRegistered {
+    function setOperatingStatus (bool mode) external requireContractOwner {
+        require(mode != operational, "Can't set same state more than once");
         operational = mode;
+        emit OperationalStatusChanged(mode);
     }
 
     /********************************************************************************************/
@@ -176,7 +178,10 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function registerAirline(address airline, bool isRegistered, uint256 regIndex, uint256 numVotes) external requireIsOperational isAirlineRegistered {
+
+    //requireIsOperational isAirlineRegistered 
+
+    function registerAirline(address airline, bool isRegistered, uint256 regIndex, uint256 numVotes) external {
         _registerAirline(airline, isRegistered, regIndex, numVotes);
     }
 
@@ -205,7 +210,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function checkAirlineRegistered(address checkAirline) external view returns(bool success) {
+    function checkAirlineRegistered(address checkAirline) external view returns(bool) {
         return registeredAirlines[checkAirline].isRegistered;
     }
 
@@ -281,7 +286,7 @@ contract FlightSuretyData {
         flightsMapping[_key].airline = _airline;
         flightsMapping[_key].statusCode = _statusCode;
         flightsMapping[_key].isRegistered = _status;
-        flightsArray.push(_key);
+        //flightsArray.push(_key);
     }
 
     /**
