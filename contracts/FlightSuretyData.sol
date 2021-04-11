@@ -68,6 +68,11 @@ contract FlightSuretyData {
     //mapping of passenger
     mapping(address => Passenger) private passengers;
 
+    bytes32[] private currentFlightsArray;
+
+
+    //EVENT
+
     event AirlineDetails();
     event PaidFee(address airline, uint256 amount, uint256 balance);
     event ContractAuthorized(address _contractId);
@@ -219,7 +224,9 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function payFeeAirline(address airline, uint256 fee) external payable requireIsOperational isAirlineRegistered{
+
+    //requireIsOperational isAirlineRegistered
+    function payFeeAirline(address airline, uint256 fee) external payable {
         _payFeeAirline(airline, fee);
     }
 
@@ -266,7 +273,6 @@ contract FlightSuretyData {
     }
 
 
-
     /**
     * @dev Add an flight to the the data
     *
@@ -286,7 +292,7 @@ contract FlightSuretyData {
         flightsMapping[_key].airline = _airline;
         flightsMapping[_key].statusCode = _statusCode;
         flightsMapping[_key].isRegistered = _status;
-        //flightsArray.push(_key);
+        currentFlightsArray.push(_key);
     }
 
     /**
@@ -297,20 +303,23 @@ contract FlightSuretyData {
         return (flightsMapping[keyFlight].isRegistered);
     }
 
+
+    function getCurrentFlights() external view requireIsOperational returns (bytes32[] memory ) {
+        return currentFlightsArray;
+    }
+
     
     /**
     * @dev getting the flight data
     *
     */
-    /*
-    function fetchFlightData (bytes32 key) external view requireIsOperational returns (string memory, uint256, address, uint8) {
+    
+    function fetchFlightData (bytes32 key) external view requireIsOperational returns (string memory, uint256, address, uint256) {
         require(flightsMapping[key].airline != address(0));
-
-
 
         return (flightsMapping[key].flightName, flightsMapping[key].flightDateTime, flightsMapping[key].airline, flightsMapping[key].statusCode);
     }
-    */
+    
 
     /**
     * @dev set flight the status 
@@ -362,10 +371,10 @@ contract FlightSuretyData {
     function payout (address payable passengerAddress, bytes32 flightkey) external payable requireIsOperational {
         require(passengers[passengerAddress].eligiblePayout, "not eligible for payout");
 
-        Passenger storage passenger = passengers[passengerAddress];
+        //Passenger storage passenger = passengers[passengerAddress];
 
         //passenger.PaidAmount = 0;
-        passenger.flightId = "";
+        passengers[passengerAddress].flightId = "";
         flightsMapping[flightkey].insuredPassengerAddress[passengerAddress] = 0;
         uint256 pay = passengers[passengerAddress].insuranceAmount;
         insuranceFunds = insuranceFunds.sub(pay);
@@ -407,6 +416,7 @@ contract FlightSuretyData {
 
 
     function getFlightData (bytes32 key) external view requireIsOperational returns(string memory, uint256, address, uint256) {
+         require(flightsMapping[key].airline != address(0));
         return (flightsMapping[key].flightName, flightsMapping[key].flightDateTime, flightsMapping[key].airline, flightsMapping[key].statusCode);
     }
 
@@ -417,53 +427,8 @@ contract FlightSuretyData {
     function() external payable {
 
     }
-    
+
+
 
 }
 
-/********************************************************************************************/
-/*                                     MY SMART CONTRACT FUNCTIONS                             */
-/********************************************************************************************/
-
-
-// Modifier
-// require registered airlines to perform
-/* modifier requireRegisteredAirlines()
-    {
-        require(msg.sender == contractOwner, "Caller is not contract owner");
-        _;
-    }
-
-*/
-// SMART CONTRACTS
-/*
-function getAirlinesRegisterionStatus (address airline) internal requireIsOperational return(bool) {
-    return Airlines[airline].isRegistered;
-    }
-
-
-function registerFlight (bytes25 key, address airline, bool status, string flightName, uint256 timestamp, uint256 statusCode) pure internal requireIsOperational {
-    flights[key].airline = airline;
-    flights[key].isRegistered = status;
-    flights[key].flightName = flightName;
-    flights[key].timestamp = timestamp;
-    flights[key].statusCode = statusCode;
-    currentFlights.push(key);   
-    }
-
-/**
-    * @dev Add an airline to the registration queue
-    *      Can only be called from FlightSuretyApp contract
-    *
-     
-    function registerAirlineData (address airline, bool  ) external pure {
-    }
-
-
-
-
-function removeVotedData (bytes32 key) pure internal requireIsOperational {
-    delete(VotedAirlines[key]);
-    }
-
-    */

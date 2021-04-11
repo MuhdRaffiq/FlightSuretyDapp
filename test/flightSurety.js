@@ -14,7 +14,7 @@ contract('Flight Surety Tests', async (accounts) => {
   /* Operations and Settings                                                              */
   /****************************************************************************************/
 
-/*
+
 
   it(`Has correct initial isOperational() value`, async function () {
 
@@ -98,16 +98,18 @@ contract('Flight Surety Tests', async (accounts) => {
 
   
 
-  it('(airline) is regitrrd but not yet funded', async () => {
+  it('(airline) is registered and funded', async () => {
     
     // ARRANGE
-    let newAirline = accounts[2];
+    let newAirline = accounts[3];
+    let fund = config.weiMultiple * 10;
 
     // ACT
     try {
         await config.flightSuretyApp.submitRegistration(newAirline, {from: config.firstAirline});
         let regIndex = await config.flightSuretyApp.getRegIndex.call(newAirline);
         await config.flightSuretyApp.executeRegistration(regIndex, {from: config.firstAirline});
+        await config.flightSuretyApp.payAirline({from: newAirline, value: fund});
     }
     catch(e) {
 
@@ -115,18 +117,20 @@ contract('Flight Surety Tests', async (accounts) => {
     let result = await config.flightSuretyData.isAirlineFunded.call(newAirline); 
 
     // ASSERT
-    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
+    assert.equal(result, true, "Airline should not be able to register another airline if it hasn't provided funding");
 
   });
 
-  */
+  
 
   it('(airline) is able to vote', async () => {
     
     // ARRANGE
-    let newAirline3 = accounts[3];
-    let newAirline2 = accounts[2];
+    let newAirline3 = accounts[4];
+    let newAirline2 = accounts[5];
     let regIndex2 = 0;
+
+    //airline 
     //let result = true;
 
     // ACT
@@ -138,64 +142,125 @@ contract('Flight Surety Tests', async (accounts) => {
         await config.flightSuretyApp.submitRegistration(newAirline2, {from: config.firstAirline});
         regIndex2 = await config.flightSuretyApp.getRegIndex.call(newAirline2);
 
-        await config.flightSuretyApp.voteRegistration(regIndex2, {from: config.firstAirline});
+        await config.flightSuretyApp.voteRegistration(regIndex2, {from: newAirline3});
         //result = await config.flightSuretyApp.getAirlineVote.call(regIndex2, {from: config.firstAirline});
     }
     catch(e) {
         //result = false;
     }
-    let result = await config.flightSuretyApp.getAirlineVote.call(regIndex2, {from: config.firstAirline});
+    let result = await config.flightSuretyApp.getAirlineVote.call(regIndex2, {from: newAirline3});
 
     // ASSERT
     assert.equal(result, true, "Airline should be able to vote for registration");
 
   });
 
+  
 
-/*
   it('airlines can vote for new registration of airline and ', async () => {
 
     // ARRANGE
-    let newAirline1 = accounts[1];
     let newAirline2 = accounts[2];
     let newAirline3 = accounts[3];
     let newAirline4 = accounts[4];
+    let newAirline5 = accounts[5];
+    let newAirline6 = accounts[6];
+
+
+    //let regIndex2 = 5;
+    //let regIndex3 = 6;
+    //let regIndex4 = 7;
+    //let regIndex5 = 8;
+    //let regIndex6 = 5;
+
+    //let result = true;
 
     // ACT
     try {
-        await config.flightSuretyApp.submitRegistration(newAirline1, {from: config.firstAirline});
-        let regIndex1 = await config.flightSuretyApp.getRegIndex.call(newAirline1);
-        await config.flightSuretyApp.executeRegistration(regIndex1, {from: config.firstAirline});
+        await config.flightSuretyApp.submitRegistration(newAirline5, {from: config.firstAirline});
+        let regIndex5 = await config.flightSuretyApp.getRegIndex.call(newAirline5);
+        //let regIndex2 = 5;
+        await config.flightSuretyApp.executeRegistration(regIndex5, {from: config.firstAirline});
 
-        await config.flightSuretyApp.submitRegistration(newAirline2, {from: config.firstAirline});
-        let regIndex2 = await config.flightSuretyApp.getRegIndex.call(newAirline2);
-        await config.flightSuretyApp.executeRegistration(regIndex2, {from: config.firstAirline});
+        //await config.flightSuretyApp.submitRegistration(newAirline3, {from: config.firstAirline});
+        //let regIndex3 = await config.flightSuretyApp.getRegIndex.call(newAirline3);
+        //let regIndex3 = 6;
+        //await config.flightSuretyApp.executeRegistration(regIndex3, {from: config.firstAirline});
 
-        await config.flightSuretyApp.submitRegistration(newAirline3, {from: config.firstAirline});
-        let regIndex3 = await config.flightSuretyApp.getRegIndex.call(newAirline3);
-        await config.flightSuretyApp.executeRegistration(regIndex3, {from: config.firstAirline});
+        //await config.flightSuretyApp.submitRegistration(newAirline4, {from: config.firstAirline});
+        //let regIndex4 = await config.flightSuretyApp.getRegIndex.call(newAirline4);
+        //let regIndex4 = 7; 
+        //await config.flightSuretyApp.executeRegistration(regIndex4, {from: config.firstAirline});
 
-        await config.flightSuretyApp.submitRegistration(newAirline4, {from: config.firstAirline});
-        let regIndex4 = await config.flightSuretyApp.getRegIndex.call(newAirline4);
+        
+        //await config.flightSuretyApp.submitRegistration(newAirline5, {from: config.firstAirline});
+        //let regIndex5 = await config.flightSuretyApp.getRegIndex.call(newAirline5);
+        //await config.flightSuretyApp.executeRegistration(regIndex5, {from: config.firstAirline});
 
-        await config.flightSuretyApp.voteRegistration(regIndex1, {from: config.firstAirline});
-        await config.flightSuretyApp.voteRegistration(regIndex2, {from: config.firstAirline});
-        await config.flightSuretyApp.voteRegistration(regIndex3, {from: config.firstAirline});
+        //await config.flightSuretyApp.submitRegistration(newAirline6, {from: config.firstAirline});
+        //let regIndex6 = await config.flightSuretyApp.getRegIndex.call(newAirline6);
+        //await config.flightSuretyApp.executeRegistration(regIndex6, {from: config.firstAirline});
+        
 
-        await config.flightSuretyApp.executeRegistration(regIndex4, {from: config.firstAirline});
+        await config.flightSuretyApp.submitRegistration(newAirline6, {from: config.firstAirline});
+        let regIndex6 = await config.flightSuretyApp.getRegIndex.call(newAirline6);
+        //let regIndex6 = 5;
+        
+        //await config.flightSuretyApp.voteRegistration(regIndex6, {from: config.firstAirline});
+        await config.flightSuretyApp.voteRegistration(regIndex6, {from: newAirline3});
+        await config.flightSuretyApp.voteRegistration(regIndex6, {from: newAirline4});
+        await config.flightSuretyApp.voteRegistration(regIndex6, {from: newAirline5});
 
+        await config.flightSuretyApp.executeRegistration(regIndex6, {from: config.firstAirline});
 
     }
     catch(e) {
-
+        //result = false;
     }
 
-    let result = await config.flightSuretyData.checkAirlineRegistered.call(newAirline4);
+    let result = await config.flightSuretyData.checkAirlineRegistered.call(newAirline6);
      // ASSERT
      assert.equal(result, true, "Airline is not registered");
 
   });
+ 
 
-*/
+  it ('can register flight into the flightsuretydata', async () => {
+
+    let result = true;
+
+    try {
+    await config.flightSuretyApp.registerFlight('Test Flight #1', new Date().getTime(), {from: config.firstAirline});
+    await config.flightSuretyApp.registerFlight('Test Flight #2', new Date().getTime(), {from: config.firstAirline});
+    //let key = await config.flightSuretyApp.createFlightkey.call({from: config.firstAirline}, 'Test Flight #1', new Date().getTime());
+
+    } catch(e) {
+        result = false;
+    }
+
+    //ASSERT
+    assert.equal(result, true, "Flight has been registered");
+
+  });
+
+
+
+  it ('Can get current flights', async () => {
+
+    let results = await config.flightSuretyApp.getCurrentFlights();
+    assert.equal(results.length, 2, 'Should only have two flights registered');
+
+
+  });
+
+
+  it('Can get flight detail', async () => {
+    let flights = await config.flightSuretyApp.getCurrentFlights();
+    let results = await config.flightSuretyApp.getFlightInformation(flights[0]);
+    assert.equal(results[0], 'Test Flight #1', 'The flights don\'t match');
+});
+
+
+
 
 });

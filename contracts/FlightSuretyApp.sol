@@ -57,11 +57,11 @@ contract FlightSuretyApp {
 
     event airlineRegistered(uint256 regIndex, address airline);
     event airlinePaid(address airline, uint256 fee);
-    event flightRegistered(string flightName, uint256 timestamp, bytes32 id);
+    event flightRegistered(bytes32 id);
     event passengerBuyInsurance(address passenger, bytes32 flightId);
     event submittedRegistration(address airline, uint256 regIndex, bool executed, uint256 numVotes);
     event votedRegistration(address airline, uint256 _regIndex);
-
+    
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -202,7 +202,6 @@ contract FlightSuretyApp {
     function getRegIndex (address _airline) external returns (uint256) {
         return regIndexAirline[_airline];       
 
-        //emit getIndex(index)
     }
 
 
@@ -221,11 +220,9 @@ contract FlightSuretyApp {
 
     function voteRegistration (uint _regIndex) external {
         
-
         //Registration storage registration = registrations[_regIndex];
         registrations[_regIndex].numVotes += 1;
         registrations[_regIndex].hasVoted[msg.sender] = true;
-
 
         //address airline = getRegIndex(_airline);
         //isVoted[_regIndex] = true;  //not sure if you should do this because once voted you cant vote others
@@ -276,7 +273,6 @@ contract FlightSuretyApp {
             
         }
 
-
     }
   
 
@@ -284,8 +280,10 @@ contract FlightSuretyApp {
     * @dev pay for registering after being registered
     *
     */  
-    function payAirline() external payable requireIsOperational requireRegisteredAirlines {
-        require(msg.value > min_fee_airlines, "The fee provided is lower than minimum requested");
+//requireIsOperational requireRegisteredAirlines
+
+    function payAirline() external payable {
+        require(msg.value >= min_fee_airlines, "The fee provided is lower than minimum requested");
         
         flightSuretyData.payFeeAirline(msg.sender, msg.value);
         emit airlinePaid(msg.sender, msg.value);
@@ -304,7 +302,7 @@ contract FlightSuretyApp {
 
         flightSuretyData.registerFlight(key, msg.sender, status, flightName, timestamp, STATUS_CODE_UNKNOWN);
 
-        emit flightRegistered(flightName, timestamp, key);
+        emit flightRegistered(key);
     }
 
     /**
@@ -378,6 +376,16 @@ contract FlightSuretyApp {
         emit OracleRequest(index, airline, flightName, timestamp);
     } 
 
+
+    function getCurrentFlights() external view requireIsOperational returns(bytes32[] memory) {
+        return flightSuretyData.getCurrentFlights();
+    }
+
+
+
+    function getFlightInformation(bytes32 flightKey) external view requireIsOperational returns (string memory flightName, uint256 flightDateTime, address airline, uint256 status) {
+        return flightSuretyData.getFlightData(flightKey);
+    }
 
 // region ORACLE MANAGEMENT
 
