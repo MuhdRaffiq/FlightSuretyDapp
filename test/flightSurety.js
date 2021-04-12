@@ -62,7 +62,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     let reverted = false;
     try {
-        await config.flightSuretyApp.registerAirline(0x0000);
+        await config.flightSuretyData.registerAirline(0x0000);
     } catch (error) {
         reverted = true;
     }

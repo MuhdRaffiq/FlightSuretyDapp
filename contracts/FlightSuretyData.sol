@@ -186,7 +186,7 @@ contract FlightSuretyData {
 
     //requireIsOperational isAirlineRegistered 
 
-    function registerAirline(address airline, bool isRegistered, uint256 regIndex, uint256 numVotes) external {
+    function registerAirline(address airline, bool isRegistered, uint256 regIndex, uint256 numVotes) external requireIsOperational {
         _registerAirline(airline, isRegistered, regIndex, numVotes);
     }
 
@@ -196,7 +196,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function _registerAirline(address _airline, bool _isregistered, uint256 _regIndex, uint256 _numVotes) private {
+    function _registerAirline(address _airline, bool _isregistered, uint256 _regIndex, uint256 _numVotes) private requireIsOperational {
         
         airlines.push(index);
         index = index + 1;
@@ -215,7 +215,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function checkAirlineRegistered(address checkAirline) external view returns(bool) {
+    function checkAirlineRegistered(address checkAirline) external view requireIsOperational  returns(bool) {
         return registeredAirlines[checkAirline].isRegistered;
     }
 
@@ -226,7 +226,7 @@ contract FlightSuretyData {
     */   
 
     //requireIsOperational isAirlineRegistered
-    function payFeeAirline(address airline, uint256 fee) external payable {
+    function payFeeAirline(address airline, uint256 fee) external payable requireIsOperational {
         _payFeeAirline(airline, fee);
     }
 
@@ -235,7 +235,7 @@ contract FlightSuretyData {
     *      Can only be called from FlightSuretyApp contract
     *
     */   
-    function _payFeeAirline (address _airline, uint256 _fee) public payable {
+    function _payFeeAirline (address _airline, uint256 _fee) public payable requireIsOperational {
         registeredAirlines[_airline].isFunded = true;
         registeredAirlines[_airline].feePaid = _fee;
 
@@ -250,7 +250,7 @@ contract FlightSuretyData {
     * @dev getting balance of funds held in this contract address
     *
     */   
-    function getBalance() public view returns (uint256) {
+    function getBalance() public view requireIsOperational  returns (uint256) {
         return address(this).balance;
     }
 

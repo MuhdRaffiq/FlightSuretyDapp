@@ -27,6 +27,8 @@ contract FlightSuretyApp {
 
     address private contractOwner;          // Account used to deploy contract
 
+    bool private operational = true;        // Blocks all state changes throughout the contract if false
+
     //mapping(bytes32 => Flight) private flights;
     
     uint256 min_num_registered = 4;  // min number of registered airlines before requiring multisg from registered airlines
@@ -61,6 +63,7 @@ contract FlightSuretyApp {
     event passengerBuyInsurance(address passenger, bytes32 flightId);
     event submittedRegistration(address airline, uint256 regIndex, bool executed, uint256 numVotes);
     event votedRegistration(address airline, uint256 _regIndex);
+    event OperationalStatusChanged(bool mode);
     
 
     /********************************************************************************************/
@@ -79,7 +82,7 @@ contract FlightSuretyApp {
     modifier requireIsOperational() 
     {
          // Modify to call data contract's status
-        require(true, "Contract is currently not operational");  
+        require(operational, "Contract is currently not operational");  
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -161,16 +164,26 @@ contract FlightSuretyApp {
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function isOperational() 
-                            public  
-                            returns(bool) 
-    {
+    function isOperational() public returns(bool) {
         return flightSuretyData.isOperational();  // Modify to call data contract's status
+    }
+
+
+    /**
+    * @dev function to kill the contract permanently if there are bugs
+    *
+    */ 
+    function setOperatingStatus (bool mode) external requireContractOwner requireIsOperational{
+        require(mode != operational, "Can't set same state more than once");
+        operational = mode;
+        emit OperationalStatusChanged(mode);
     }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+
 
     /**
     * @dev Submit Airline registration for other airline to know. Only applicable if more than 4 airlines registered
@@ -179,7 +192,7 @@ contract FlightSuretyApp {
 
     //requireContractOwner requireRegisteredAirlines requireIsOperational
 
-    function submitRegistration (address _airline) external {
+    function submitRegistration (address _airline) external requireIsOperational requireRegisteredAirlines {
         
         uint256 _regIndex = registrations.length;
 
@@ -199,17 +212,25 @@ contract FlightSuretyApp {
     }
 
 
+
+
     function getRegIndex (address _airline) external returns (uint256) {
         return regIndexAirline[_airline];       
 
     }
 
 
+    /**
+    * @dev get Airline vote of the registration. Only applicable if more than 4 airlines registered
+    *
+    */
     function getAirlineVote (uint256 _regIndex) external returns (bool) {
         //Registration storage registration = registrations[_regIndex];
         bool status =  registrations[_regIndex].hasVoted[msg.sender];
         return (status);
     }
+
+
 
     /**
     * @dev Vote Airline registration. Only applicable if more than 4 airlines registered
@@ -218,7 +239,7 @@ contract FlightSuretyApp {
 
     //requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) notVoted(_regIndex)
 
-    function voteRegistration (uint _regIndex) external {
+    function voteRegistration (uint _regIndex) external requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex) notVoted(_regIndex){
         
         //Registration storage registration = registrations[_regIndex];
         registrations[_regIndex].numVotes += 1;
@@ -238,15 +259,13 @@ contract FlightSuretyApp {
 
     //requireRegisteredAirlines requireIsOperational indexRegExist(_regIndex) notExecuted(_regIndex)
 
-    function executeRegistration(uint256 _regIndex) external {
-        //require(!flightSuretyData.checkAirlineRegistered(registrations[_regIndex].airline), "Airline is registered and cannot be registered again");
+    function executeRegistration(uint256 _regIndex) external requireIsOperational requireRegisteredAirlines indexRegExist(_regIndex) notExecuted(_regIndex) {
+        require(!flightSuretyData.checkAirlineRegistered(registrations[_regIndex].airline), "Airline is registered and cannot be registered again");
         
         uint256 registeredAirlines = flightSuretyData.checkNumberAirlines();
         uint256 numVotesRequired = 3;
         
         //registeredAirlines/2;
-
-        //Registration storage registration = registrations[_regIndex];
 
         address _airline = registrations[_regIndex].airline;
 
@@ -255,7 +274,6 @@ contract FlightSuretyApp {
             registrations[_regIndex].executed = true;
             
             flightSuretyData.registerAirline(registrations[_regIndex].airline, true, _regIndex, 0);
-            //return (success, 0);
 
             emit airlineRegistered(_regIndex, _airline);
 
@@ -280,9 +298,7 @@ contract FlightSuretyApp {
     * @dev pay for registering after being registered
     *
     */  
-//requireIsOperational requireRegisteredAirlines
-
-    function payAirline() external payable {
+    function payAirline() external payable requireIsOperational requireRegisteredAirlines {
         require(msg.value >= min_fee_airlines, "The fee provided is lower than minimum requested");
         
         flightSuretyData.payFeeAirline(msg.sender, msg.value);
