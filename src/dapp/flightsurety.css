@@ -2,24 +2,57 @@ body {
     background-image: url('flight.jpg'); /* Source: iStockPhoto */
     background-repeat: no-repeat;
     background-size: cover;
+    
 }
 
 .container {
-    margin-top: 400px;
     background-color: #000;
     opacity: 0.9;
     color: #fff;
-    padding: 40px;
+    padding: 10px;
 }
 
-.top-20 {
-    margin-top: 20px;
+.operational-status-wrapper {
+    
+    padding: 10px;
+    margin-bottom: 5px;
 }
 
-
-.top-10 {
-    margin-top: 10;
+.operational-status {
+    padding: 10px;
 }
+
+.contract-status-div {
+    border: 1px solid white;
+    background-color: darkred;
+    padding: 10px;
+    flex: 50%;
+}
+
+.airline-row {
+    display: flex;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+}
+
+.register-airline-wrapper {
+    border: 1px solid white;
+    background-color: darkgreen; 
+    flex: 50%;
+    padding: 10px;
+}
+/*.register-flight-wrapper {*/
+/*    border: 1px solid white;*/
+/*    background-color: darkgreen;*/
+/*    flex: 50%;*/
+/*    padding: 10px;*/
+/*}*/
+/*.fund-airline-wrapper {*/
+/*    border: 1px solid white;*/
+/*    background-color: darkgreen; */
+/*    flex: 50%;*/
+/*    padding: 10px;*/
+/*}*/
 
 h5 {
     color: #999999;
@@ -29,19 +62,8 @@ section {
     margin-bottom: 50px;
 }
 
-.field {
-    font-weight: bold;
-    text-align: right;
-}
-
-.field-value {
-    color: #0e7fa8;
-}
-
-label.form {
-    font-size: 14px;
-    margin-right: 20px;
-}
-input {
-    margin-right: 30px;
+input.address {
+    min-width: 85%;
+    font-size: large;
+    margin-bottom: 5px;
 }

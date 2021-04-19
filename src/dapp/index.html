@@ -11,6 +11,149 @@
 
 <body>
 
+
+    <main class= "container">
+        <h1>Flight Insurance</h1>
+        <div id = "operational-status-wrapper" class = "operational-status">
+            <div id="operational-status">
+                <section>
+                    <h2>Status contract</h2>
+                    <div class="row">
+                        <div class="col-sm-4 field">Operational status</div>
+                        <div class="col-sm-8 field-value">true</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 field">Number of registered airline</div>
+                        <div class="col-sm-8 field-value">1</div>
+                    </div>
+                    <!--
+                    <div class="row">
+                        <div class="col-sm-4 field">Number of funded Airlines</div>
+                        <div class="col-sm-8 field-value">0</div>
+                    </div>
+                -->
+                    <div class="row">
+                        <div class="col-sm-4 field">Current flight</div>
+                        <div class="col-sm-8 field-value">MHR785</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 field">Contract fund</div>
+                        <div class="col-sm-8 field-value">0</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 field">Update</div>
+                        <div class="col-sm-8 field-value">Mon Sep 28 2020 09:51:43 GMT-0600 (Mountain Daylight Time)</div>
+                    </div>
+                </section>
+            </div>
+            <div class="text-center">
+                <btn class="btn btn-primary" id="update-status">Update status</btn>
+            </div>
+        </div>
+    <br>
+
+        <div class="airline-row">
+            <div class="contract-status-div text-center">
+                <h3>Contract app status swicth</h3>
+                <btn class="btn btn-primary" id="set-contractApp-false">Kill contract</btn>
+                <p class="text-description">Only contract owner can perform the task</p>
+            </div>
+
+            <div class="contract-status-div text-center">
+                <h3>Contract data status swicth</h3>
+                <btn class="btn btn-primary" id="set-contractData-false">Disable contract</btn>
+                <btn class="btn btn-primary" id="set-contractData-true">Enable contract</btn>
+                <p class="text-description">Only contract owner can perform the task</p>
+            </div>
+        </div>
+
+
+        <div class="airline-row">
+            <div class="register-airline-wrapper text-center">
+                <h3>1. Submit Airline</h3>
+                <input class="address" id="submit-airline-address" placeholder="Airline Address"/>
+                <btn class="btn btn-primary" id="submit-airline">submit registration</btn>
+                <p class="text-description">only registered airline can perform this task</p>
+            </div>
+
+            <div class="register-airline-wrapper text-center">
+                <h3>2. Vote airline</h3>
+                <select  id="voting-airline-address"></select>  
+                <btn class="btn btn-primary" id="vote-airline">Vote airline</btn>
+                <p class="text-description">only registered airline can perform this task</p>
+            </div>
+
+            <div class="register-airline-wrapper text-center">
+                <h3>3. register Airline</h3>
+                <select id="executing-airline-address" ></select>
+                <btn class="btn btn-primary" id="execute-airline">Execute registration</btn>
+                <p class="text-description">only registered airline can perform this task and only after it has execute voting process</p>
+            </div>
+
+            <div class="register-airline-wrapper text-center">
+                <h3>Fund my airline</h3>
+                <btn class="btn btn-primary" id="fund-airline">Fund</btn>
+                <p class="text-warning">Must be a registered airline to perform this task and costs 10 ether</p>
+            </div>
+        </div>
+
+
+        <div class="airline-row">
+            <div class="register-airline-wrapper text-center">
+                <h3>Register Flight</h3>
+                <p>
+                    <label for="register-flight-name">Flight Name: </label>
+                    <input id="register-flight-name" placeholder="Flight Name" />
+                </p>
+                <p>
+                    <label for="register-flight-date">Flight Date: </label>
+                    <input id="register-flight-date" type="date" />
+                </p>
+                <p>
+                    <label for="register-flight-time">Flight Time: </label>
+                    <input id="register-flight-time" type="time" />
+                </p>
+
+                    <btn class="btn btn-primary" id="register-flight">Register Flight</btn>
+                    <p class="text-warning">Must be a fully funded airline to perform this task</p>
+                    <p class="text-warning">All times are UTC</p>
+            </div>
+        </div>
+
+
+        <div >
+            <h2>Passenger details</h2>
+                <div class="register-airline-wrapper text-center">
+                    <h5>Choose Flight</h5>
+                    <select id="select-flight"></select>
+                    <br/>
+                    <!--
+                    <p>
+                        <label for="purchase-insurance">Amount of Ether: </label>
+                        <input id="purchase-insurance" type="number" />
+                    </p>
+                    -->
+                    <btn class="btn btn-primary" id="purchase-flight-insurance">Purchase Insurace</btn>
+
+                    <btn class="btn btn-primary" id="send-to-oracles">Send to Oracles to check flight status</btn><br /><br />
+                    <btn class="btn btn-primary" id="collect-funds">Collect Funds</btn>
+                </div>
+        </div>
+
+        <div class="log-row">
+            <div class="log-wrapper">
+                <h3>Transaction History</h3>
+                <ul class="log-ul" id='log-ul'></ul>
+            </div>
+        </div>
+
+    </main>
+
+
+
+
+
+    <!--
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <a class="navbar-brand" href="#">FlightSurety</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
@@ -97,7 +240,7 @@
 };
     </script>
 
-
+    -->
 </body>
 
 </html>
