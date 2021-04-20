@@ -6,7 +6,7 @@ import Web3 from 'web3';
 export default class Contract {
     constructor(network) {
 
-        let config = Config[network];
+        this.config = Config[network];
         //this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
         //this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         //this.initialize(callback);
@@ -14,7 +14,7 @@ export default class Contract {
         this.flights = [];
         this.airlines = [];
         this.passengers = [];
-        this.gasLimit = 5000000;
+        this.gasLimit = 50000000;
     }
 
 
@@ -110,7 +110,7 @@ export default class Contract {
     }
 */
     async isOperational() {
-        return await this.flightSuretyApp.methods.isOperational().call();
+        return await this.flightSuretyData.methods.isOperational().call();
     }
 
     async getNumberOfRegisteredAirlines() {
@@ -125,6 +125,16 @@ export default class Contract {
         const contractBalance =  await this.flightSuretydata.methods.getBalance().call();
         return `${this.web3.utils.fromWei(contractBalance, 'finney')} finney`;
     }
+
+    async getCurrentSubmission() {
+        return await this.flightSuretydata.methods.getCurrentSubmitted().call();
+    }
+
+    async getSubmittedAirline(numberIndex) {
+        return await this.flightSuretyApp.methods.getCurrentAirlineSubmitted(numberIndex).call();
+    }
+
+
 /*
     async getInsuranceBalance() {
         const insuranceBalance =  await this.flightSuretyApp.methods.getInsuranceBalance().call();

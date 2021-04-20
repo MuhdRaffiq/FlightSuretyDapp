@@ -49,6 +49,7 @@ contract FlightSuretyApp {
     }
 
     Registration[] public registrations;
+    address[] public currentSubmittedAirlines;
 
     mapping(address => uint256) public regIndexAirline;
     mapping(address => bool) public isVoted;
@@ -192,7 +193,7 @@ contract FlightSuretyApp {
 
     //requireContractOwner requireRegisteredAirlines requireIsOperational
 
-    function submitRegistration (address _airline) external requireIsOperational requireRegisteredAirlines {
+    function submitRegistration (address _airline) external payable requireIsOperational requireRegisteredAirlines {
         
         uint256 _regIndex = registrations.length;
 
@@ -203,6 +204,7 @@ contract FlightSuretyApp {
             numVotes: 0   
         }));
 
+        currentSubmittedAirlines.push(_airline);
         regIndexAirline[_airline] = _regIndex;
 
         bool statusExecuted = false;
@@ -212,11 +214,18 @@ contract FlightSuretyApp {
     }
 
 
-
-
     function getRegIndex (address _airline) external returns (uint256) {
         return regIndexAirline[_airline];       
 
+    }
+
+
+    function getCurrentSubmitted () external view requireIsOperational returns (address[] memory) {
+        return currentSubmittedAirlines;
+    }
+
+    function getCurrentAirlineSubmitted (uint256 _numberIndex) external view requireIsOperational returns (address) {
+        return registrations[_numberIndex].airline;
     }
 
 

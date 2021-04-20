@@ -14,8 +14,8 @@ let blockNumbersSeen = [];
 
     DOM.elid('update-status').addEventListener('click', refreshStatus);
     DOM.elid('set-contractApp-false').addEventListener('click', setOperationalStatusFalseApp);
-    DOM.elid('set-statusData-false').addEventListener('click', setOperationalStatusFalse);
-    DOM.elid('set-statusData-true').addEventListener('click', setOperationalStatusTrue);
+    DOM.elid('set-contractData-false').addEventListener('click', setOperationalStatusFalse);
+    DOM.elid('set-contractData-true').addEventListener('click', setOperationalStatusTrue);
     //DOM.elid('register-contract-address').addEventListener('click', authorizeContract);
     //DOM.elid('unregister-contract-address').addEventListener('click', deauthorizeContract);
     DOM.elid('submit-airline').addEventListener('click', submitAirline);
@@ -144,7 +144,7 @@ async function getOperationalStatus() {
     let numberOfRegisteredAirlines;
     //let numberOfFundedAirlines;
     let contractBalance;
-    let insuranceBalance;
+    //let insuranceBalance;
 
     try {
         contractIsOperational = await contract.isOperational();
@@ -193,6 +193,23 @@ async function getOperationalStatus() {
         //{label: 'Funds held for insurance:', value: insuranceBalance},
         {label: 'Last updated:', value: new Date()}
     ]);
+
+    // make sure we have all the submitted airline addresses
+    try {
+        await removeAllChildren('voting-airline-address');
+        let currentSubmittedAirlines = await contract.getCurrentSubmission();
+        const currentFlightSelect = DOM.elid('voting-airline-address');
+        for (let index = 0; index < currentSubmittedAirlines.length; index++) {
+            let listSubmitted = await contract.getSubmittedAirline(index);
+            let option = document.createElement('option');
+            option.append(`${listSubmitted}`)
+            option.value = listSubmitted;
+
+            currentFlightSelect.append(option);
+        }
+    } catch (error) {
+        console.log(error);
+    }
 
     // make sure we have all the current flights
     try {
