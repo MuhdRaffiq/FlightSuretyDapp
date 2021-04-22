@@ -193,7 +193,7 @@ contract FlightSuretyApp {
 
     //requireContractOwner requireRegisteredAirlines requireIsOperational
 
-    function submitRegistration (address _airline) external payable requireIsOperational requireRegisteredAirlines {
+    function submitRegistration (address _airline) external payable requireIsOperational {
         
         uint256 _regIndex = registrations.length;
 
